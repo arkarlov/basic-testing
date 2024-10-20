@@ -48,4 +48,13 @@ describe('simpleCalculator tests', () => {
     });
     expect(result).toBeNull();
   });
+
+  // test('should return null for invalid arguments', () => {
+  //   const result = simpleCalculator({
+  //     a: NaN,
+  //     b: 4,
+  //     action: Action.Add,
+  //   });
+  //   expect(result).toBeNull();
+  // });
 });
