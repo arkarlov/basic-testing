@@ -1,3 +1,5 @@
+import lodash from 'lodash';
+
 import {
   getBankAccount,
   InsufficientFundsError,
@@ -6,6 +8,10 @@ import {
 } from '.';
 
 describe('BankAccount', () => {
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
   test('should create account with initial balance', () => {
     const bankAccount = getBankAccount(1000);
 
@@ -66,38 +72,31 @@ describe('BankAccount', () => {
   test('fetchBalance should return number in case if request did not failed', async () => {
     const bankAccount = getBankAccount(1000);
 
-    try {
-      const balance = await bankAccount.fetchBalance();
+    jest.spyOn(lodash, 'random').mockReturnValueOnce(50).mockReturnValueOnce(1);
 
-      if (balance === null) {
-        throw 'request failed';
-      }
-
-      expect(typeof balance).toBe('number');
-    } catch (error) {
-      expect(error).toMatch('request failed');
-    }
+    await expect(bankAccount.fetchBalance()).resolves.toBe(50);
   });
 
   test('synchronizeBalance should set new balance if fetchBalance returned number', async () => {
-    const bankAccount = getBankAccount(NaN);
+    const bankAccount = getBankAccount(1000);
 
-    try {
-      await bankAccount.synchronizeBalance();
-      expect(bankAccount.getBalance()).not.toBeNaN();
-    } catch {
-      expect(bankAccount.getBalance()).toBeNaN();
-    }
+    jest
+      .spyOn(bankAccount, 'fetchBalance')
+      .mockImplementationOnce(() => Promise.resolve(2000));
+
+    await bankAccount.synchronizeBalance();
+    expect(bankAccount.getBalance()).toBe(2000);
   });
 
   test('synchronizeBalance should throw SynchronizationFailedError if fetchBalance returned null', async () => {
     const bankAccount = getBankAccount(1000);
 
-    try {
-      await bankAccount.synchronizeBalance();
-      expect(true).toBeTruthy();
-    } catch (error) {
-      expect(error).toEqual(new SynchronizationFailedError());
-    }
+    jest
+      .spyOn(bankAccount, 'fetchBalance')
+      .mockImplementationOnce(() => Promise.resolve(null));
+
+    await expect(bankAccount.synchronizeBalance()).rejects.toThrowError(
+      SynchronizationFailedError,
+    );
   });
 });
